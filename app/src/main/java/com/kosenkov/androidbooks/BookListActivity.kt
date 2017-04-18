@@ -10,6 +10,8 @@ import android.support.v7.widget.Toolbar
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.kosenkov.androidbooks.books.GoogleBooks
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.book_list.*
@@ -31,6 +33,8 @@ class BookListActivity : AppCompatActivity() {
      */
     private var mTwoPane: Boolean = false
 
+    lateinit var glide: RequestManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_book_list)
@@ -47,6 +51,18 @@ class BookListActivity : AppCompatActivity() {
 
         val adapter = setupRecyclerView(book_list)
 
+        if (findViewById(R.id.book_detail_container) != null) {
+            // The detail container view will be present only in the
+            // large-screen layouts (res/values-w900dp).
+            // If this view is present, then the
+            // activity should be in two-pane mode.
+            mTwoPane = true
+        }
+
+
+
+        glide = Glide.with(this)
+
         backgroundTask(
                 inBackground = { q: String ->
                     GoogleBooksHttp().syncSearch(q)
@@ -56,14 +72,6 @@ class BookListActivity : AppCompatActivity() {
                     adapter.notifyDataSetChanged()
                 }
         ).execute("Alice")
-
-        if (findViewById(R.id.book_detail_container) != null) {
-            // The detail container view will be present only in the
-            // large-screen layouts (res/values-w900dp).
-            // If this view is present, then the
-            // activity should be in two-pane mode.
-            mTwoPane = true
-        }
 
 
     }
@@ -116,6 +124,7 @@ class BookListActivity : AppCompatActivity() {
                 set(book) {
                     mView.book_title.text = book?.title
                     mView.book_subtitle.text = book?.subtitle
+                    glide.load(book?.thumbnailImageLinks).into(mView.book_thumbnail)
                 }
 
         }
