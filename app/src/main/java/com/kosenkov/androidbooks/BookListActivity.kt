@@ -2,11 +2,9 @@ package com.kosenkov.androidbooks
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.Toolbar
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +12,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.kosenkov.androidbooks.books.GoogleBooks
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
+import kotlinx.android.synthetic.main.activity_book_list.*
 import kotlinx.android.synthetic.main.book_list.*
 import kotlinx.android.synthetic.main.book_list_content.view.*
 
@@ -39,11 +38,9 @@ class BookListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_book_list)
 
-        val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
-        toolbar.title = title
+        toolbar.title = "Book Search"
 
-        val fab = findViewById(R.id.fab) as FloatingActionButton
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
@@ -59,13 +56,11 @@ class BookListActivity : AppCompatActivity() {
             mTwoPane = true
         }
 
-
-
         glide = Glide.with(this)
 
         backgroundTask(
                 inBackground = { q: String ->
-                    GoogleBooksHttp().syncSearch(q)
+                    GoogleBooksHttp().search(q)
                 },
                 postExecute = { (startIndex, totalItems, items) ->
                     adapter.mValues = items.toList()
@@ -120,12 +115,14 @@ class BookListActivity : AppCompatActivity() {
 
         inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
 
-            var mItem: GoogleBooks.Volume? = null
+            private var _mItem: GoogleBooks.Volume? = null
+            var mItem: GoogleBooks.Volume?
                 set(book) {
                     mView.book_title.text = book?.title
                     mView.book_subtitle.text = book?.subtitle
-                    glide.load(book?.thumbnailImageLinks).into(mView.book_thumbnail)
+                    glide.load(book?.thumbnailImageLinks).fitCenter().crossFade().into(mView.book_thumbnail)
                 }
+                get() = _mItem
 
         }
     }

@@ -36,7 +36,7 @@ class GoogleBooksHttp : GoogleBooks {
      * Performs blocking HTTP request to Google API and parses resulting JSON
      */
     @Throws(Exception::class)
-    override fun syncSearch(query: String, startIndex: Int): GoogleBooks.Volumes {
+    override fun search(query: String, startIndex: Int): GoogleBooks.Volumes {
         require(startIndex >= 0)
 
         // doc: https://developers.google.com/books/docs/v1/reference/volumes/list
@@ -63,7 +63,7 @@ class GoogleBooksHttp : GoogleBooks {
 
     fun parseVolumes(json: String, startIndex: Int) = JSONObject(json).toVolumes(startIndex)
 
-    override fun syncDetails(volumeId: String): GoogleBooks.Volume.Details {
+    override fun details(volumeId: String): GoogleBooks.Volume.Details {
         TODO("https://books.google.com/ebooks?id=$volumeId")
     }
 }

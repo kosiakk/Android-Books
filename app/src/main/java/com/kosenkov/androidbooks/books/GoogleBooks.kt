@@ -23,7 +23,7 @@ interface GoogleBooks {
     /**
      * Performs blocking low-level operation and returns one page of search results
      */
-    fun syncSearch(query: String, startIndex: Int = 0): Volumes
+    fun search(query: String, startIndex: Int = 0): Volumes
 
-    fun syncDetails(volumeId: String): Volume.Details
+    fun details(volumeId: String): Volume.Details
 }
