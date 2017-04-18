@@ -21,7 +21,7 @@ interface GoogleBooks {
     }
 
     /**
-     * Performs blocking operation and returns paged search results
+     * Performs blocking low-level operation and returns one page of search results
      */
     fun syncSearch(query: String, startIndex: Int = 0): Volumes
 

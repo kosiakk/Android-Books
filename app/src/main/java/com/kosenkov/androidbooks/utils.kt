@@ -1,5 +1,6 @@
 package com.kosenkov.androidbooks
 
+import android.os.AsyncTask
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -33,4 +34,19 @@ inline fun <reified T : Any> JSONArray.asSequence(): Sequence<T> = when (T::clas
     JSONObject::class -> asSequence(JSONArray::getJSONObject) as Sequence<T>
     JSONArray::class -> asSequence(JSONArray::getJSONArray) as Sequence<T>
     else -> asSequence(JSONArray::get).filterIsInstance(T::class.java)
+}
+
+
+/**
+ * Quick and dirty background task implementation
+ * Anko probably does it better
+ */
+inline fun <P, T> backgroundTask(crossinline postExecute: (T) -> Unit, crossinline inBackground: (P) -> T): AsyncTask<P, Void, T> {
+    val task: AsyncTask<P, Void, T> = object : AsyncTask<P, Void, T>() {
+
+        override fun doInBackground(vararg params: P): T = inBackground(params[0])
+
+        override fun onPostExecute(result: T) = postExecute(result)
+    }
+    return task
 }

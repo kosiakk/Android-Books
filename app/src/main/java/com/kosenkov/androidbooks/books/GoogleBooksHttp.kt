@@ -49,7 +49,7 @@ class GoogleBooksHttp : GoogleBooks {
                 // .appendQueryParameter("maxResults", 40)
                 .appendQueryParameter("orderBy", "relevance")
                 .appendQueryParameter("projection", "lite") // might just require important fields
-                .appendQueryParameter("fields", "totalItems,items(id,kind,volumeInfo(title,subtitle,authors,imageLinks(thumbnail)))")
+//                .appendQueryParameter("fields", "totalItems,items(id,kind,volumeInfo(title,subtitle,authors,imageLinks(thumbnail)))")
                 .appendQueryParameter("startIndex", startIndex.toString())
                 .build()
 

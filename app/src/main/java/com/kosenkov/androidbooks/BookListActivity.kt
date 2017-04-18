@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.kosenkov.androidbooks.books.GoogleBooks
+import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.book_list.*
 
 /**
@@ -44,7 +45,17 @@ class BookListActivity : AppCompatActivity() {
                     .setAction("Action", null).show()
         }
 
-        setupRecyclerView(book_list)
+        val adapter = setupRecyclerView(book_list)
+
+        backgroundTask(
+                inBackground = { q: String ->
+                    GoogleBooksHttp().syncSearch(q)
+                },
+                postExecute = { (startIndex, totalItems, items) ->
+                    adapter.mValues = items.toList()
+                    adapter.notifyDataSetChanged()
+                }
+        ).execute("Alice")
 
         if (findViewById(R.id.book_detail_container) != null) {
             // The detail container view will be present only in the
@@ -53,13 +64,19 @@ class BookListActivity : AppCompatActivity() {
             // activity should be in two-pane mode.
             mTwoPane = true
         }
+
+
     }
 
-    private fun setupRecyclerView(recyclerView: RecyclerView) {
-        recyclerView.adapter = SimpleItemRecyclerViewAdapter(emptyList())
+    private fun setupRecyclerView(recyclerView: RecyclerView): SimpleItemRecyclerViewAdapter {
+        val adapter = SimpleItemRecyclerViewAdapter(
+                emptyList()
+        )
+        recyclerView.adapter = adapter
+        return adapter
     }
 
-    inner class SimpleItemRecyclerViewAdapter(private val mValues: List<GoogleBooks.Volume>) : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+    inner class SimpleItemRecyclerViewAdapter(var mValues: List<GoogleBooks.Volume>) : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context)
