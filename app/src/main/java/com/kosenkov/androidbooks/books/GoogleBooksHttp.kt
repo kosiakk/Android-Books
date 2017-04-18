@@ -16,7 +16,7 @@ class GoogleBooksHttp : GoogleBooks {
             GoogleBooks.Volumes(
                     startIndex,
                     getInt("totalItems"),
-                    getJSONArray("items").asSequence().map { it.toVolume() }
+                    getJSONArray("items").asSequence<JSONObject>().map { it.toVolume() }
             )
 
 
@@ -27,7 +27,7 @@ class GoogleBooksHttp : GoogleBooks {
                 getString("id"),
                 info.getString("title"),
                 info.optString("subtitle"),
-                info.getJSONArray("authors").join(", "),
+                info.getJSONArray("authors").asSequence<String>().joinToString(),
                 info.optJSONObject("imageLinks")?.getString("thumbnail")
         )
     }
