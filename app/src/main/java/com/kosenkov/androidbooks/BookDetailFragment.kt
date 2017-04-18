@@ -1,13 +1,13 @@
 package com.kosenkov.androidbooks
 
 import android.os.Bundle
-import android.support.design.widget.CollapsingToolbarLayout
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.kosenkov.androidbooks.dummy.DummyContent
+import com.kosenkov.androidbooks.books.GoogleBooks
+import kotlinx.android.synthetic.main.activity_book_detail.*
 
 /**
  * A fragment representing a single Book detail screen.
@@ -24,22 +24,18 @@ class BookDetailFragment : Fragment() {
     /**
      * The dummy content this fragment is presenting.
      */
-    private var mItem: DummyContent.DummyItem? = null
+    private var mItem: GoogleBooks.Volume? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (arguments.containsKey(ARG_ITEM_ID)) {
-            // Load the dummy content specified by the fragment
+            // todo Load the dummy content specified by the fragment
             // arguments. In a real-world scenario, use a Loader
             // to load content from a content provider.
-            mItem = DummyContent.ITEM_MAP[arguments.getString(ARG_ITEM_ID)]
+            mItem = GoogleBooks.Volume("todo", "todo", "todo", "todo", "todo", "todo")
 
-            val activity = this.activity
-            val appBarLayout = activity.findViewById(R.id.toolbar_layout) as CollapsingToolbarLayout
-            if (appBarLayout != null) {
-                appBarLayout.title = mItem!!.content
-            }
+            toolbar_layout.title = mItem!!.title
         }
     }
 
@@ -49,7 +45,8 @@ class BookDetailFragment : Fragment() {
 
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
-            (rootView.findViewById(R.id.book_detail) as TextView).text = mItem!!.details
+            (rootView.findViewById(R.id.book_detail) as TextView).text = mItem!!.subtitle
+            // toDo details
         }
 
         return rootView

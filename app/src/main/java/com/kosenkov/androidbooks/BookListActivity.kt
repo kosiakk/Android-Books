@@ -11,7 +11,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.kosenkov.androidbooks.dummy.DummyContent
+import com.kosenkov.androidbooks.books.GoogleBooks
+import kotlinx.android.synthetic.main.book_list.*
 
 /**
  * An activity representing a list of Books. This activity
@@ -43,8 +44,7 @@ class BookListActivity : AppCompatActivity() {
                     .setAction("Action", null).show()
         }
 
-        val recyclerView = findViewById(R.id.book_list)!!
-        setupRecyclerView(recyclerView as RecyclerView)
+        setupRecyclerView(book_list)
 
         if (findViewById(R.id.book_detail_container) != null) {
             // The detail container view will be present only in the
@@ -56,10 +56,10 @@ class BookListActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView(recyclerView: RecyclerView) {
-        recyclerView.adapter = SimpleItemRecyclerViewAdapter(DummyContent.ITEMS)
+        recyclerView.adapter = SimpleItemRecyclerViewAdapter(emptyList())
     }
 
-    inner class SimpleItemRecyclerViewAdapter(private val mValues: List<DummyContent.DummyItem>) : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+    inner class SimpleItemRecyclerViewAdapter(private val mValues: List<GoogleBooks.Volume>) : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context)
@@ -70,7 +70,7 @@ class BookListActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             holder.mItem = mValues[position]
             holder.mIdView.text = mValues[position].id
-            holder.mContentView.text = mValues[position].content
+            holder.mContentView.text = mValues[position].title
 
             holder.mView.setOnClickListener { v ->
                 if (mTwoPane) {
@@ -98,7 +98,7 @@ class BookListActivity : AppCompatActivity() {
         inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
             val mIdView: TextView
             val mContentView: TextView
-            var mItem: DummyContent.DummyItem? = null
+            var mItem: GoogleBooks.Volume? = null
 
             init {
                 mIdView = mView.findViewById(R.id.id) as TextView

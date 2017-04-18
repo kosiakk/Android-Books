@@ -10,7 +10,7 @@ Playgroud for Android development - implement Google Books API
 
 `very long list` -> view recycling, pre-fetch, cache
 `cover images and book titles` -> minimalistic list view. Google shows annotation and a few more things
-`detail of a given book` -> a spearate Activity with complete information
+`detail of a given book` -> a separate Activity with complete information
 
 I'm going to implement the app in two steps:
 1. Minimal working application with cache, async, and basic Material Design

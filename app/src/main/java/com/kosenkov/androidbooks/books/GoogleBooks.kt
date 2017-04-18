@@ -6,14 +6,14 @@ package com.kosenkov.androidbooks.books
 
 interface GoogleBooks {
 
-    data class Volumes(val startIndex: Int, val totalItems: Int, val items: List<Volume>)
+    data class Volumes(val startIndex: Int, val totalItems: Int, val items: Sequence<Volume>)
 
     class Volume(val kind: String,
                  val id: String,
                  val title: String,
-                 val subtitle: String,
+                 val subtitle: String?,
                  val authors: String,
-                 val thumbnailImageLinks: String
+                 val thumbnailImageLinks: String?
     ) {
 
         inner class Details(val mainCategory: String)
@@ -25,4 +25,5 @@ interface GoogleBooks {
      */
     fun syncSearch(query: String, startIndex: Int = 0): Volumes
 
+    fun syncDetails(volumeId: String): Volume.Details
 }
