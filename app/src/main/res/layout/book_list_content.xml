@@ -1,20 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:minHeight="?android:attr/listPreferredItemHeight"
+    android:paddingBottom="@dimen/text_margin"
+    android:paddingLeft="@dimen/text_margin"
+    android:paddingRight="@dimen/text_margin"
+    android:paddingTop="@dimen/text_margin">
+
+    <ImageView
+        android:id="@+id/book_thumbnail"
+        android:layout_width="128dp"
+        android:layout_height="128dp"
+        android:layout_alignParentStart="true" />
 
     <TextView
-        android:id="@+id/id"
-        android:layout_width="wrap_content"
+        android:id="@+id/book_title"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/text_margin"
-        android:textAppearance="?attr/textAppearanceListItem" />
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@id/book_thumbnail"
+        android:layout_toEndOf="@id/book_thumbnail"
+        android:text="(Title)"
+        android:textAppearance="@style/TextAppearance.AppCompat.SearchResult.Title" />
 
     <TextView
-        android:id="@+id/content"
-        android:layout_width="wrap_content"
+        android:id="@+id/book_subtitle"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/text_margin"
-        android:textAppearance="?attr/textAppearanceListItem" />
-</LinearLayout>
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/book_title"
+        android:layout_marginTop="@dimen/text_margin"
+        android:layout_toEndOf="@id/book_thumbnail"
+        android:text="(subtitle)"
+        android:textAppearance="@style/TextAppearance.AppCompat.SearchResult.Subtitle" />
+
+</RelativeLayout>

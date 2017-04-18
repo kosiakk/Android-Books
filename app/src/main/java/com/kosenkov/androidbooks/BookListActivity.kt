@@ -10,10 +10,10 @@ import android.support.v7.widget.Toolbar
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import com.kosenkov.androidbooks.books.GoogleBooks
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.book_list.*
+import kotlinx.android.synthetic.main.book_list_content.view.*
 
 /**
  * An activity representing a list of Books. This activity
@@ -86,8 +86,6 @@ class BookListActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             holder.mItem = mValues[position]
-            holder.mIdView.text = mValues[position].id
-            holder.mContentView.text = mValues[position].title
 
             holder.mView.setOnClickListener { v ->
                 if (mTwoPane) {
@@ -113,18 +111,13 @@ class BookListActivity : AppCompatActivity() {
         }
 
         inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
-            val mIdView: TextView
-            val mContentView: TextView
+
             var mItem: GoogleBooks.Volume? = null
+                set(book) {
+                    mView.book_title.text = book?.title
+                    mView.book_subtitle.text = book?.subtitle
+                }
 
-            init {
-                mIdView = mView.findViewById(R.id.id) as TextView
-                mContentView = mView.findViewById(R.id.content) as TextView
-            }
-
-            override fun toString(): String {
-                return super.toString() + " '" + mContentView.text + "'"
-            }
         }
     }
 }
