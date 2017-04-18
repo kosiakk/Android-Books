@@ -15,3 +15,11 @@ Playgroud for Android development - implement Google Books API
 I'm going to implement the app in two steps:
 1. Minimal working application with cache, async, and basic Material Design
 2. If time permits, work in the UI
+
+## Implementation details
+
+I will concentrate on the Books API and async operations.
+I'll try to keep architecture expandable towards Live-Search design.
+
+I understand that a "very long list" implies that search results should be loaded on demand.
+I'll optimize for devices with limited memory (although my phone has 6 Gb of ram).
