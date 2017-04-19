@@ -1,7 +1,6 @@
 package com.kosenkov.androidbooks
 
 import android.content.Intent
-import android.os.AsyncTask
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -16,6 +15,8 @@ import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.activity_book_list.*
 import kotlinx.android.synthetic.main.book_list.*
 import kotlinx.android.synthetic.main.book_list_content.view.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 
 /**
  * An activity representing a list of Books. This activity
@@ -34,6 +35,9 @@ class BookListActivity : AppCompatActivity() {
     private var mTwoPane: Boolean = false
 
     lateinit var glide: RequestManager
+    lateinit var searchListAdapter: SimpleItemRecyclerViewAdapter
+
+    val booksApi = GoogleBooksHttp()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,8 +51,6 @@ class BookListActivity : AppCompatActivity() {
                     .setAction("Action", null).show()
         }
 
-        val adapter = setupRecyclerView(book_list)
-
         if (findViewById(R.id.book_detail_container) != null) {
             // The detail container view will be present only in the
             // large-screen layouts (res/values-w900dp).
@@ -58,54 +60,37 @@ class BookListActivity : AppCompatActivity() {
         }
 
         glide = Glide.with(this)
+        searchListAdapter = setupRecyclerView(book_list)
 
-        val newSearchRequest = AsyncBooksSearch(adapter)
-        newSearchRequest.execute("Alice")
+        doSearch("Alice")
+    }
+
+    private fun doSearch(query: String) {
+
+        doAsync {
+            val firstPage = booksApi.search(query)  // blocking operation
+
+            uiThread {
+                searchListAdapter.mValues = LazyBooksList(firstPage)
+                searchListAdapter.notifyDataSetChanged()
+            }
+
+        }
 
     }
 
-    class AsyncBooksSearch(private val adapter: SimpleItemRecyclerViewAdapter) : AsyncTask<String, Void, GoogleBooks.Volumes>() {
-        val booksApi = GoogleBooksHttp()
+    inner class LazyBooksList(val result: GoogleBooks.Volumes)
+        : LazyPagedList<GoogleBooks.Volume>(result.totalItems, result.items.toList()) {
 
-        override fun doInBackground(vararg params: String): GoogleBooks.Volumes {
-            return booksApi.search(params[0])
-        }
+        override fun enqueueFetch(pageIndex: Int) {
+            doAsync {
+                val result = booksApi.search(result.searchQuery, pageIndex * pageSize)
 
-        override fun onPostExecute(result: GoogleBooks.Volumes) {
-            adapter.mValues = LazyBooksList(result)
-            adapter.notifyDataSetChanged()
-        }
+                setPageData(pageIndex, result.items.toList())
 
-
-        inner class LazyBooksList(val result: GoogleBooks.Volumes)
-            : LazyPagedList<GoogleBooks.Volume>(result.totalItems, result.items.toList()) {
-
-            override fun enqueueFetch(pageIndex: Int) {
-
-                object : AsyncTask<Void, Void, GoogleBooks.Volumes?>() {
-
-                    override fun doInBackground(vararg params: Void?): GoogleBooks.Volumes? =
-                            try {
-                                booksApi.search(result.searchQuery, pageIndex * pageSize)
-                            } catch (err: Exception) {
-                                null
-                            }
-
-                    override fun onPostExecute(result: GoogleBooks.Volumes?) =
-                            if (result == null) {
-                                resetPageData(pageIndex)
-                            } else {
-                                setPageData(pageIndex, result.items.toList())
-
-                                // redraw affected items from the GUI thread
-                                adapter.notifyItemRangeChanged(pageIndex * pageSize, pageSize)
-                            }
-
-
-                }.execute()
+                // can be done from background thread
+                searchListAdapter.notifyItemRangeChanged(pageIndex * pageSize, pageSize)
             }
-
-
         }
     }
 

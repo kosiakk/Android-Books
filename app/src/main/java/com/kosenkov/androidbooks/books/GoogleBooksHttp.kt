@@ -29,7 +29,7 @@ class GoogleBooksHttp : GoogleBooks {
                 getString("id"),
                 info.getString("title"),
                 info.optString("subtitle"),
-                info.getJSONArray("authors").asSequence<String>().joinToString(),
+                info.optJSONArray("authors")?.asSequence<String>()?.joinToString() ?: "",
                 info.optJSONObject("imageLinks")?.getString("thumbnail")
         )
     }
