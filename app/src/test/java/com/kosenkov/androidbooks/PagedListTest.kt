@@ -1,12 +1,18 @@
 package com.kosenkov.androidbooks
 
+import org.junit.Assert.*
+import org.junit.Test
+
 /**
  * Created by Alexander Kosenkov on 19.04.2017.
  */
 
 class PagedListTest {
 
-    class Worlds : LazyPagedList<String>(5, listOf("hello", "world")) {
+    /**
+     * Test data becomes available immediately on request
+     */
+    class Words : LazyPagedList<String>(5, listOf("hello", "world")) {
 
         override fun enqueueFetch(pageIndex: Int) {
             print(" (Fetching page $pageIndex...) ")
@@ -30,7 +36,7 @@ class PagedListTest {
     @Test
     fun testInitialNull() {
 
-        val list = Worlds()
+        val list = Words()
         assertEquals("hello", list[0])
         assertEquals("world", list[1])
 
@@ -49,5 +55,28 @@ class PagedListTest {
 
     }
 
+
+    /**
+     * This test case never gets any data
+     */
+    class NoData : LazyPagedList<String>(100, 20) {
+        val requestCounts = IntArray(5) { 0 }
+
+        override fun enqueueFetch(pageIndex: Int) {
+            requestCounts[pageIndex]++
+        }
+    }
+
+    @Test
+    fun testNoData() {
+        val list = NoData()
+
+        for (i in 21..99) {
+            assertNull("no data must be returned", list[i])
+        }
+
+        assertArrayEquals("Each page must be requested once, except the first",
+                intArrayOf(0, 1, 1, 1, 1), list.requestCounts)
+    }
 
 }

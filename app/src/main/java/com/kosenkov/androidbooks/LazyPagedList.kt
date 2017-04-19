@@ -7,6 +7,8 @@ abstract class LazyPagedList<E>(totalSize: Int, protected val pageSize: Int) : A
         require(pageSize > 0)
     }
 
+    private val Page_NotRequested: List<E>? = null
+    private val Page_RequestSent: List<E>? = emptyList()
     private val pages = arrayOfNulls<List<E>>(totalSize divideRoundUp pageSize)
 
     override val size = totalSize
@@ -22,17 +24,27 @@ abstract class LazyPagedList<E>(totalSize: Int, protected val pageSize: Int) : A
         val pageIndex = index / pageSize
         val indexOnPage = index.rem(pageSize)
 
-        if (pageIndex in pages.indices) {
-            val page = pages[pageIndex]
+        // Array is prepared for all the pages in advance
+        // This can be changed to Map<Page, List> if needed
+        assert(pageIndex in pages.indices)
 
-            if (page != null && indexOnPage in page.indices) {
-                return page[indexOnPage]
+        val page = pages[pageIndex]
+        when (page) {
+            Page_NotRequested -> {
+                // we don't have this data yet
+                pages[pageIndex] = Page_RequestSent
+                enqueueFetch(pageIndex)
+            }
+            Page_RequestSent -> {
+                // request is currently pending
+            }
+            else -> {
+                if (indexOnPage in page!!.indices)
+                    return page[indexOnPage]
             }
         }
 
-        // we don't have this data yet
-        enqueueFetch(pageIndex)
-
+        // there is no data yet
         return null
     }
 
