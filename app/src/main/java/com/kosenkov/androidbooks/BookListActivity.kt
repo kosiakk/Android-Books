@@ -60,7 +60,9 @@ class BookListActivity : AppCompatActivity() {
         }
 
         glide = Glide.with(this)
-        searchListAdapter = setupRecyclerView(book_list)
+        searchListAdapter = SimpleItemRecyclerViewAdapter()
+
+        book_list.adapter = searchListAdapter
 
         doSearch("Alice")
     }
@@ -82,6 +84,16 @@ class BookListActivity : AppCompatActivity() {
     inner class LazyBooksList(val result: GoogleBooks.Volumes)
         : LazyPagedList<GoogleBooks.Volume>(result.totalItems, result.items.toList()) {
 
+        override fun get(index: Int): GoogleBooks.Volume? {
+            val nextPage = index + pageSize
+            if (nextPage < size) {
+                // pre-fetch next page
+                get(nextPage)
+            }
+
+            return super.get(index)
+        }
+
         override fun enqueueFetch(pageIndex: Int) {
             doAsync {
                 val result = booksApi.search(result.searchQuery, pageIndex * pageSize)
@@ -94,15 +106,8 @@ class BookListActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupRecyclerView(recyclerView: RecyclerView): SimpleItemRecyclerViewAdapter {
-        val adapter = SimpleItemRecyclerViewAdapter(
-                emptyList()
-        )
-        recyclerView.adapter = adapter
-        return adapter
-    }
-
-    inner class SimpleItemRecyclerViewAdapter(var mValues: List<GoogleBooks.Volume?>) : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+    inner class SimpleItemRecyclerViewAdapter : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+        var mValues: List<GoogleBooks.Volume?> = emptyList()
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context)
@@ -111,12 +116,14 @@ class BookListActivity : AppCompatActivity() {
         }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.mItem = mValues[position]
+            holder.setBook(mValues[position])
 
             holder.mView.setOnClickListener { v ->
+                val item = mValues[position] ?: return@setOnClickListener
+
                 if (mTwoPane) {
                     val arguments = Bundle()
-                    arguments.putString(BookDetailFragment.ARG_ITEM_ID, holder.mItem!!.id)
+                    arguments.putString(BookDetailFragment.ARG_ITEM_ID, item.id)
                     val fragment = BookDetailFragment()
                     fragment.arguments = arguments
                     supportFragmentManager.beginTransaction()
@@ -125,27 +132,22 @@ class BookListActivity : AppCompatActivity() {
                 } else {
                     val context = v.context
                     val intent = Intent(context, BookDetailActivity::class.java)
-                    intent.putExtra(BookDetailFragment.ARG_ITEM_ID, holder.mItem!!.id)
+                    intent.putExtra(BookDetailFragment.ARG_ITEM_ID, item.id)
 
                     context.startActivity(intent)
                 }
             }
         }
 
-        override fun getItemCount(): Int {
-            return mValues.size
-        }
+        override fun getItemCount() = mValues.size
 
         inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
 
-            private var _mItem: GoogleBooks.Volume? = null
-            var mItem: GoogleBooks.Volume?
-                set(book) {
-                    mView.book_title.text = book?.title
-                    mView.book_subtitle.text = book?.subtitle
-                    glide.load(book?.thumbnailImageLinks).fitCenter().crossFade().into(mView.book_thumbnail)
-                }
-                get() = _mItem
+            fun setBook(book: GoogleBooks.Volume?) {
+                mView.book_title.text = book?.title
+                mView.book_subtitle.text = book?.subtitle
+                glide.load(book?.thumbnailImageLinks).fitCenter().crossFade().into(mView.book_thumbnail)
+            }
 
         }
     }
