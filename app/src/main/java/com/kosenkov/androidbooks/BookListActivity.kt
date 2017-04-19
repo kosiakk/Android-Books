@@ -1,6 +1,7 @@
 package com.kosenkov.androidbooks
 
 import android.content.Intent
+import android.os.AsyncTask
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -58,17 +59,54 @@ class BookListActivity : AppCompatActivity() {
 
         glide = Glide.with(this)
 
-        backgroundTask(
-                inBackground = { q: String ->
-                    GoogleBooksHttp().search(q)
-                },
-                postExecute = { (startIndex, totalItems, items) ->
-                    adapter.mValues = items.toList()
-                    adapter.notifyDataSetChanged()
-                }
-        ).execute("Alice")
+        val newSearchRequest = AsyncBooksSearch(adapter)
+        newSearchRequest.execute("Alice")
+
+    }
+
+    class AsyncBooksSearch(private val adapter: SimpleItemRecyclerViewAdapter) : AsyncTask<String, Void, GoogleBooks.Volumes>() {
+        val booksApi = GoogleBooksHttp()
+
+        override fun doInBackground(vararg params: String): GoogleBooks.Volumes {
+            return booksApi.search(params[0])
+        }
+
+        override fun onPostExecute(result: GoogleBooks.Volumes) {
+            adapter.mValues = LazyBooksList(result)
+            adapter.notifyDataSetChanged()
+        }
 
 
+        inner class LazyBooksList(val result: GoogleBooks.Volumes)
+            : LazyPagedList<GoogleBooks.Volume>(result.totalItems, result.items.toList()) {
+
+            override fun enqueueFetch(pageIndex: Int) {
+
+                object : AsyncTask<Void, Void, GoogleBooks.Volumes?>() {
+
+                    override fun doInBackground(vararg params: Void?): GoogleBooks.Volumes? =
+                            try {
+                                booksApi.search(result.searchQuery, pageIndex * pageSize)
+                            } catch (err: Exception) {
+                                null
+                            }
+
+                    override fun onPostExecute(result: GoogleBooks.Volumes?) =
+                            if (result == null) {
+                                resetPageData(pageIndex)
+                            } else {
+                                setPageData(pageIndex, result.items.toList())
+
+                                // redraw affected items from the GUI thread
+                                adapter.notifyItemRangeChanged(pageIndex * pageSize, pageSize)
+                            }
+
+
+                }.execute()
+            }
+
+
+        }
     }
 
     private fun setupRecyclerView(recyclerView: RecyclerView): SimpleItemRecyclerViewAdapter {
@@ -79,7 +117,7 @@ class BookListActivity : AppCompatActivity() {
         return adapter
     }
 
-    inner class SimpleItemRecyclerViewAdapter(var mValues: List<GoogleBooks.Volume>) : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+    inner class SimpleItemRecyclerViewAdapter(var mValues: List<GoogleBooks.Volume?>) : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context)

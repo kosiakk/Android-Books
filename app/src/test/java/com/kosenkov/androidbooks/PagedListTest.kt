@@ -22,7 +22,7 @@ class PagedListTest {
                     "${pageIndex * 2 + 1}: page $pageIndex second"
             )
 
-            addAll(pageIndex, data)
+            setPageData(pageIndex, data)
         }
 
         override fun get(index: Int): String? {

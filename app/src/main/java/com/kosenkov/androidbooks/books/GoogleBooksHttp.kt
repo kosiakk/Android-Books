@@ -11,12 +11,14 @@ class GoogleBooksHttp : GoogleBooks {
     // Any sophisticated hacker will extract this key from APK or sniff anyways.
     private val api = "AIzaSyAyiYb_NGVu6MIim1TmQDRG0VRrnO0C550"
 
+    val PageSize = 40
+
     // https://developers.google.com/books/docs/v1/reference/volumes
-    private fun JSONObject.toVolumes(startIndex: Int) =
+    private fun JSONObject.toVolumes(startIndex: Int, searchQuery: String) =
             GoogleBooks.Volumes(
-                    startIndex,
                     getInt("totalItems"),
-                    getJSONArray("items").asSequence<JSONObject>().map { it.toVolume() }
+                    getJSONArray("items").asSequence<JSONObject>().map { it.toVolume() },
+                    startIndex, searchQuery
             )
 
 
@@ -46,7 +48,7 @@ class GoogleBooksHttp : GoogleBooks {
                 .appendEncodedPath("books/v1/volumes")
                 .appendQueryParameter("q", query)
                 .appendQueryParameter("key", api)
-                // .appendQueryParameter("maxResults", 40)
+                .appendQueryParameter("maxResults", PageSize.toString())
                 .appendQueryParameter("orderBy", "relevance")
                 .appendQueryParameter("projection", "lite") // might just require important fields
 //                .appendQueryParameter("fields", "totalItems,items(id,kind,volumeInfo(title,subtitle,authors,imageLinks(thumbnail)))")
@@ -58,10 +60,10 @@ class GoogleBooksHttp : GoogleBooks {
             it.bufferedReader(charset = UTF_8).readText()
         } // will throw exception otherwise
 
-        return parseVolumes(json, startIndex)
+        return parseVolumes(json, startIndex, query)
     }
 
-    fun parseVolumes(json: String, startIndex: Int) = JSONObject(json).toVolumes(startIndex)
+    fun parseVolumes(json: String, startIndex: Int, searchQuery: String) = JSONObject(json).toVolumes(startIndex, searchQuery)
 
     override fun details(volumeId: String): GoogleBooks.Volume.Details {
         TODO("https://books.google.com/ebooks?id=$volumeId")

@@ -6,7 +6,9 @@ package com.kosenkov.androidbooks.books
 
 interface GoogleBooks {
 
-    data class Volumes(val startIndex: Int, val totalItems: Int, val items: Sequence<Volume>)
+    data class Volumes(val totalItems: Int, val items: Sequence<Volume>,
+                       val startIndex: Int, val searchQuery: String // additional request parameters
+    )
 
     class Volume(val kind: String,
                  val id: String,

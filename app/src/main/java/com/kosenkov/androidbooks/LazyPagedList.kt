@@ -1,6 +1,14 @@
 package com.kosenkov.androidbooks
 
-
+/**
+ * This implementation of List interface loads its data lazily
+ * by requesting external data in fixed pages.
+ *
+ * This implementation is better suited for GUIs than returning Future<E>, because
+ * read operations are constant-time and eager to fail immediately.
+ *
+ * Implementations should asynchronously call `setPageData` or `resetPageData` from `enqueueFetch
+ */
 abstract class LazyPagedList<E>(totalSize: Int, protected val pageSize: Int) : AbstractList<E?>() {
     init {
         require(totalSize > 0)
@@ -17,6 +25,11 @@ abstract class LazyPagedList<E>(totalSize: Int, protected val pageSize: Int) : A
         pages[0] = firstPage
     }
 
+    /**
+     * Returns data at given linear index across all pages.
+     *
+     * @returns null if data is not yet available
+     */
     @Synchronized
     override fun get(index: Int): E? {
         if (index < 0 || index >= size) throw IndexOutOfBoundsException("index: $index, lazy size: $size")
@@ -54,14 +67,20 @@ abstract class LazyPagedList<E>(totalSize: Int, protected val pageSize: Int) : A
      * Implementations should call this method, when data becomes available
      */
     @Synchronized
-    protected fun addAll(pageIndex: Int, elements: List<E>) {
+    protected fun setPageData(pageIndex: Int, elements: List<E>) {
 
         require(elements.size == pageSize || size - pageIndex * pageSize == elements.size) {
             "List of ${elements.size} elements is added to the page $pageIndex"
         }
 
-
         pages[pageIndex] = elements // It would be better to copy the (possibly mutable) list
+    }
+
+    /**
+     * If request has failed, page request can be discarded
+     */
+    protected fun resetPageData(pageIndex: Int) {
+        pages[pageIndex] = Page_NotRequested
     }
 
 
