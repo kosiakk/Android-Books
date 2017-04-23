@@ -3,6 +3,7 @@ package com.kosenkov.androidbooks.books
 import android.support.test.runner.AndroidJUnit4
 import com.kosenkov.androidbooks.asSequence
 import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -67,7 +68,7 @@ class GoogleBooksHttpParserTest {
         }
         """
 
-        val data = GoogleBooksHttp().parseVolumes(json, 0, "")
+        val data = GoogleBooksHttp().parseVolumes(JSONObject(json), 0, "")
         val books = data.items.toList()
 
         assertEquals(3, books.size)

@@ -34,10 +34,10 @@ class BookListActivity : AppCompatActivity() {
      */
     private var mTwoPane: Boolean = false
 
-    lateinit var glide: RequestManager
-    lateinit var searchListAdapter: SimpleItemRecyclerViewAdapter
+    private lateinit var glide: RequestManager
+    private lateinit var searchListAdapter: SimpleItemRecyclerViewAdapter
 
-    val booksApi = GoogleBooksHttp()
+    private val booksApi = GoogleBooksHttp()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +73,7 @@ class BookListActivity : AppCompatActivity() {
             val firstPage = booksApi.search(query)  // blocking operation
 
             uiThread {
-                searchListAdapter.mValues = LazyBooksList(firstPage)
+                searchListAdapter.mValues = LazyBooksList(query, firstPage)
                 searchListAdapter.notifyDataSetChanged()
             }
 
@@ -81,7 +81,7 @@ class BookListActivity : AppCompatActivity() {
 
     }
 
-    inner class LazyBooksList(val result: GoogleBooks.Volumes)
+    inner class LazyBooksList(val searchQuery: String, result: GoogleBooks.Volumes)
         : LazyPagedList<GoogleBooks.Volume>(result.totalItems, result.items.toList()) {
 
         override fun get(index: Int): GoogleBooks.Volume? {
@@ -96,12 +96,14 @@ class BookListActivity : AppCompatActivity() {
 
         override fun enqueueFetch(pageIndex: Int) {
             doAsync {
-                val result = booksApi.search(result.searchQuery, pageIndex * pageSize)
+                val result = booksApi.search(searchQuery, pageIndex * pageSize)
 
                 setPageData(pageIndex, result.items.toList())
 
-                // can be done from background thread
-                searchListAdapter.notifyItemRangeChanged(pageIndex * pageSize, pageSize)
+                uiThread {
+                    // Only the original thread that created a view hierarchy can touch its views.
+                    searchListAdapter.notifyItemRangeChanged(pageIndex * pageSize, pageSize)
+                }
             }
         }
     }

@@ -8,31 +8,13 @@ import kotlin.text.Charsets.UTF_8
 
 class GoogleBooksHttp : GoogleBooks {
 
-    // Any sophisticated hacker will extract this key from APK or sniff anyways.
-    private val api = "AIzaSyAyiYb_NGVu6MIim1TmQDRG0VRrnO0C550"
+    private fun httpAPI() = Uri.Builder()
+            .scheme("https")
+            .authority("www.googleapis.com")
+            .appendEncodedPath("books/v1/volumes")
+            .appendQueryParameter("key", "AIzaSyAyiYb_NGVu6MIim1TmQDRG0VRrnO0C550")
 
     val PageSize = 40
-
-    // https://developers.google.com/books/docs/v1/reference/volumes
-    private fun JSONObject.toVolumes(startIndex: Int, searchQuery: String) =
-            GoogleBooks.Volumes(
-                    getInt("totalItems"),
-                    getJSONArray("items").asSequence<JSONObject>().map { it.toVolume() },
-                    startIndex, searchQuery
-            )
-
-
-    private fun JSONObject.toVolume(): GoogleBooks.Volume {
-        val info = getJSONObject("volumeInfo")
-        return GoogleBooks.Volume(
-                getString("kind"),
-                getString("id"),
-                info.getString("title"),
-                info.optString("subtitle"),
-                info.optJSONArray("authors")?.asSequence<String>()?.joinToString() ?: "",
-                info.optJSONObject("imageLinks")?.getString("thumbnail")
-        )
-    }
 
     /**
      * Performs blocking HTTP request to Google API and parses resulting JSON
@@ -42,31 +24,69 @@ class GoogleBooksHttp : GoogleBooks {
         require(startIndex >= 0)
 
         // doc: https://developers.google.com/books/docs/v1/reference/volumes/list
-        val uri = Uri.Builder()
-                .scheme("https")
-                .authority("www.googleapis.com")
-                .appendEncodedPath("books/v1/volumes")
+        val uri = httpAPI()
                 .appendQueryParameter("q", query)
-                .appendQueryParameter("key", api)
                 .appendQueryParameter("maxResults", PageSize.toString())
                 .appendQueryParameter("orderBy", "relevance")
-                .appendQueryParameter("projection", "lite") // might just require important fields
                 .appendQueryParameter("fields", "totalItems,items(id,kind,volumeInfo(title,subtitle,authors,imageLinks(thumbnail)))")
                 .appendQueryParameter("startIndex", startIndex.toString())
                 .build()
 
+        val json: String = uri.readString() // will throw exception otherwise
 
-        val json: String = URL(uri.toString()).openStream().use {
+        return parseVolumes(JSONObject(json), startIndex, query)
+    }
+
+    override fun details(volumeId: String): GoogleBooks.VolumeDetails {
+
+        // doc: https://developers.google.com/books/docs/v1/reference/volumes/get
+        val uri = httpAPI()
+                .appendPath(volumeId)
+                .appendQueryParameter("projection", "lite")
+                .build()
+
+        val json = uri.readString().toJsonObject()
+
+        return GoogleBooks.VolumeDetails(json.toVolume(), TODO("main category"))
+    }
+
+    // https://developers.google.com/books/docs/v1/reference/volumes
+    private fun JSONObject.toVolumes(startIndex: Int, searchQuery: String) =
+            GoogleBooks.Volumes(
+                    getInt("totalItems"),
+                    getJSONArray("items").asSequence<JSONObject>().map { it.toVolume() }
+            )
+
+    private fun JSONObject.toVolume(): GoogleBooks.Volume {
+        val info = getJSONObject("volumeInfo")
+        return GoogleBooks.Volume(
+                getString("id"),
+                info.getString("title"),
+                info.optString("subtitle"),
+                info.optJSONArray("authors")?.asSequence<String>()?.joinToString() ?: "",
+                info.optJSONObject("imageLinks")?.getString("thumbnail")
+        )
+    }
+
+    // will throw exception on failures
+    private fun Uri.readString(): String {
+
+        val json: String = URL(toString()).openStream().use {
             it.bufferedReader(charset = UTF_8).readText()
-        } // will throw exception otherwise
+        }
 
-        return parseVolumes(json, startIndex, query)
+        // should we handle network problems?
+        // 1. retry after timeout might be too late for GUI
+        // 2. how to handle 5xx errors? Quota Exceeded errors?
+
+        return json
     }
 
-    fun parseVolumes(json: String, startIndex: Int, searchQuery: String) = JSONObject(json).toVolumes(startIndex, searchQuery)
+    fun parseVolumes(jsonObject: JSONObject, startIndex: Int, searchQuery: String) = jsonObject.toVolumes(startIndex, searchQuery)
 
-    override fun details(volumeId: String): GoogleBooks.Volume.Details {
-        TODO("https://books.google.com/ebooks?id=$volumeId")
-    }
+    private inline fun String.toJsonObject() = JSONObject(this)
+
+
 }
+
 

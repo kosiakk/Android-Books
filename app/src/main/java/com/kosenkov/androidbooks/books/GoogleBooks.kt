@@ -6,26 +6,20 @@ package com.kosenkov.androidbooks.books
 
 interface GoogleBooks {
 
-    data class Volumes(val totalItems: Int, val items: Sequence<Volume>,
-                       val startIndex: Int, val searchQuery: String // additional request parameters
-    )
+    data class Volumes(val totalItems: Int, val items: Sequence<Volume>)
 
-    class Volume(val kind: String,
-                 val id: String,
-                 val title: String,
-                 val subtitle: String?,
-                 val authors: String,
-                 val thumbnailImageLinks: String?
-    ) {
+    data class Volume(val id: String,
+                      val title: String,
+                      val subtitle: String?,
+                      val authors: String,
+                      val thumbnailImageLinks: String?)
 
-        inner class Details(val mainCategory: String)
-
-    }
+    data class VolumeDetails(val volume: Volume, val mainCategory: String)
 
     /**
      * Performs blocking low-level operation and returns one page of search results
      */
     fun search(query: String, startIndex: Int = 0): Volumes
 
-    fun details(volumeId: String): Volume.Details
+    fun details(volumeId: String): VolumeDetails
 }
