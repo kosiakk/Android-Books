@@ -12,8 +12,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import com.bumptech.glide.load.resource.drawable.GlideDrawable
-import com.bumptech.glide.request.target.Target
 import com.kosenkov.androidbooks.books.GoogleBooks
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.activity_book_list.*
@@ -68,7 +66,7 @@ class BookListActivity : AppCompatActivity() {
 
         book_list.adapter = searchListAdapter
 
-        doSearch("Alice")
+        doSearch("Liza")
     }
 
     private fun doSearch(query: String) {
@@ -144,38 +142,24 @@ class BookListActivity : AppCompatActivity() {
 
         override fun getItemCount() = mValues.size
 
-        inner class ViewHolder(val mView: View) : RecyclerImageViewHolder(mView, glide, mView.book_thumbnail) {
+        inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
 
             fun setBook(book: GoogleBooks.Volume?) {
 
                 mView.book_title.text = book?.title ?: "..."
                 mView.book_subtitle.text = book?.subtitle ?: ""
 
-                setImage(book?.thumbnailImageLinks)
+                mView.book_thumbnail.imageUrlLazy = book?.thumbnailImageLinks
             }
+
+            private var ImageView.imageUrlLazy: String?
+                get() = throw UnsupportedOperationException("get ImageView.imageUrlLazy")
+                set(url) {
+                    Glide.clear(this)
+                    glide.load(url).fitCenter().crossFade().into(this)
+                }
 
         }
     }
 
-    abstract class RecyclerImageViewHolder(mView: View, val glide: RequestManager, val imageView: ImageView)
-        : RecyclerView.ViewHolder(mView) {
-
-        private var mCancelable: Target<GlideDrawable>? = null
-
-        protected fun setImage(url: String?) {
-            Glide.clear(imageView)
-
-            if (mCancelable != null) {
-                // prevent animation of previously recycled image
-                Glide.clear(mCancelable)
-            }
-
-            if (url != null) {
-                mCancelable = glide.load(url).fitCenter().crossFade().into(imageView)
-            } else {
-                // erase existing view
-                mCancelable = null
-            }
-        }
-    }
 }
