@@ -9,8 +9,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.resource.drawable.GlideDrawable
+import com.bumptech.glide.request.target.Target
 import com.kosenkov.androidbooks.books.GoogleBooks
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.activity_book_list.*
@@ -86,15 +89,17 @@ class BookListActivity : AppCompatActivity() {
         : LazyPagedList<GoogleBooks.Volume>(result.totalItems, result.items.toList()) {
 
         override fun enqueueFetch(pageIndex: Int) {
-            Log.d("LazyList", "enqueueFetch(pageIndex=$pageIndex)")
+            Log.i("LazyList", "enqueueFetch(pageIndex=$pageIndex)")
             doAsync {
-                val result = booksApi.search(searchQuery, pageIndex * pageSize)
+                val startIndex = pageIndex * pageSize
+
+                val result = booksApi.search(searchQuery, startIndex)
 
                 setPageData(pageIndex, result.items.toList())
 
                 uiThread {
                     // Only the original thread that created a view hierarchy can touch its views.
-                    searchListAdapter.notifyItemRangeChanged(pageIndex * pageSize, pageSize)
+                    searchListAdapter.notifyItemRangeChanged(startIndex, pageSize)
                 }
             }
         }
@@ -133,16 +138,44 @@ class BookListActivity : AppCompatActivity() {
             }
         }
 
+        override fun onDetachedFromRecyclerView(recyclerView: RecyclerView?) {
+            super.onDetachedFromRecyclerView(recyclerView)
+        }
+
         override fun getItemCount() = mValues.size
 
-        inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
+        inner class ViewHolder(val mView: View) : RecyclerImageViewHolder(mView, glide, mView.book_thumbnail) {
 
             fun setBook(book: GoogleBooks.Volume?) {
-                mView.book_title.text = book?.title
-                mView.book_subtitle.text = book?.subtitle
-                glide.load(book?.thumbnailImageLinks).fitCenter().crossFade().into(mView.book_thumbnail)
+
+                mView.book_title.text = book?.title ?: "..."
+                mView.book_subtitle.text = book?.subtitle ?: ""
+
+                setImage(book?.thumbnailImageLinks)
             }
 
+        }
+    }
+
+    abstract class RecyclerImageViewHolder(mView: View, val glide: RequestManager, val imageView: ImageView)
+        : RecyclerView.ViewHolder(mView) {
+
+        private var mCancelable: Target<GlideDrawable>? = null
+
+        protected fun setImage(url: String?) {
+            Glide.clear(imageView)
+
+            if (mCancelable != null) {
+                // prevent animation of previously recycled image
+                Glide.clear(mCancelable)
+            }
+
+            if (url != null) {
+                mCancelable = glide.load(url).fitCenter().crossFade().into(imageView)
+            } else {
+                // erase existing view
+                mCancelable = null
+            }
         }
     }
 }
