@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -84,17 +85,8 @@ class BookListActivity : AppCompatActivity() {
     inner class LazyBooksList(val searchQuery: String, result: GoogleBooks.Volumes)
         : LazyPagedList<GoogleBooks.Volume>(result.totalItems, result.items.toList()) {
 
-        override fun get(index: Int): GoogleBooks.Volume? {
-            val nextPage = index + pageSize
-            if (nextPage < size) {
-                // pre-fetch next page
-                get(nextPage)
-            }
-
-            return super.get(index)
-        }
-
         override fun enqueueFetch(pageIndex: Int) {
+            Log.d("LazyList", "enqueueFetch(pageIndex=$pageIndex)")
             doAsync {
                 val result = booksApi.search(searchQuery, pageIndex * pageSize)
 

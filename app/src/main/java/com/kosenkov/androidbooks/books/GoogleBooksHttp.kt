@@ -54,7 +54,7 @@ class GoogleBooksHttp : GoogleBooks {
     private fun JSONObject.toVolumes(startIndex: Int, searchQuery: String) =
             GoogleBooks.Volumes(
                     getInt("totalItems"),
-                    getJSONArray("items").asSequence<JSONObject>().map { it.toVolume() }
+                    optJSONArray("items")?.asSequence<JSONObject>()?.map { it.toVolume() } ?: emptySequence()
             )
 
     private fun JSONObject.toVolume(): GoogleBooks.Volume {

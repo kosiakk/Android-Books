@@ -31,7 +31,7 @@ class BookDetailFragment : Fragment() {
             throw IllegalArgumentException("Book details were asked, but no $ARG_ITEM_ID is given")
         }
 
-        volumeId = arguments.getString(ARG_ITEM_ID)
+        volumeId = arguments.getString(ARG_ITEM_ID)!!
     }
 
 
@@ -43,7 +43,7 @@ class BookDetailFragment : Fragment() {
             val mItem = booksApi.details(volumeId)
 
             uiThread {
-                detail_toolbar.title = mItem.volume.title
+                detail_toolbar?.title = mItem.volume.title
                 book_detail.text = mItem.volume.subtitle
 
                 // toDo other details
