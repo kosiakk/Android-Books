@@ -6,8 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
-import kotlinx.android.synthetic.main.activity_book_detail.*
-import kotlinx.android.synthetic.main.book_detail.*
+import kotlinx.android.synthetic.main.activity_book_detail.view.*
+import kotlinx.android.synthetic.main.book_detail.view.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 
@@ -43,8 +43,8 @@ class BookDetailFragment : Fragment() {
             val mItem = booksApi.details(volumeId)
 
             uiThread {
-                detail_toolbar?.title = mItem.volume.title
-                book_detail.text = mItem.volume.subtitle
+                rootView.detail_toolbar?.title = mItem.volume.title
+                rootView.book_detail.text = mItem.volume.subtitle
 
                 // toDo other details
             }

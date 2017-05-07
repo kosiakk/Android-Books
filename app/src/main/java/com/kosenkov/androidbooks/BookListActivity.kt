@@ -21,9 +21,13 @@ import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 
 /**
- * An activity representing a list of Books. This activity
- * has different presentations for handset and tablet-size devices. On
- * handsets, the activity presents a list of items, which when touched,
+ * An activity represents a list of Books.
+ *
+ * It allows searching and quickly presents very long lists of results.
+ * Besides usual use of ListViewAdapter it performs asynchronous lazy loading of results.
+ *
+ * This activity has different presentations for handset and tablet-size devices.
+ * On handsets, the activity presents a list of items, which when touched,
  * lead to a [BookDetailActivity] representing
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
@@ -34,7 +38,7 @@ class BookListActivity : AppCompatActivity() {
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
      * device.
      */
-    private var mTwoPane: Boolean = false
+    private var mTwoPane: Boolean = false // unfortunately late init is not available for primitive types
 
     private lateinit var glide: RequestManager
     private lateinit var searchListAdapter: SimpleItemRecyclerViewAdapter
@@ -83,14 +87,15 @@ class BookListActivity : AppCompatActivity() {
 
     }
 
-    inner class LazyBooksList(val searchQuery: String, result: GoogleBooks.Volumes)
-        : LazyPagedList<GoogleBooks.Volume>(result.totalItems, result.items.toList()) {
+    inner class LazyBooksList(val searchQuery: String, firstPage: GoogleBooks.Volumes)
+        : LazyPagedList<GoogleBooks.Volume>(firstPage.totalItems, firstPage.items.toList()) {
 
         override fun enqueueFetch(pageIndex: Int) {
-            Log.i("LazyList", "enqueueFetch(pageIndex=$pageIndex)")
+            Log.v("LazyList", "enqueueFetch(pageIndex=$pageIndex)")
             doAsync {
                 val startIndex = pageIndex * pageSize
 
+                // blocking call
                 val result = booksApi.search(searchQuery, startIndex)
 
                 setPageData(pageIndex, result.items.toList())
@@ -103,46 +108,50 @@ class BookListActivity : AppCompatActivity() {
         }
     }
 
-    inner class SimpleItemRecyclerViewAdapter : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+    inner class SimpleItemRecyclerViewAdapter : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.BookViewHolder>() {
         var mValues: List<GoogleBooks.Volume?> = emptyList()
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.book_list_content, parent, false)
-            return ViewHolder(view)
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+                BookViewHolder(
+                        LayoutInflater.from(parent.context)
+                                .inflate(R.layout.book_list_content, parent, /* attachToRoot = */false))
+
+        override fun onBindViewHolder(holder: BookViewHolder, position: Int) {
+            val book = mValues[position]
+            holder.setBook(book)
+
+            holder.mView.setOnClickListener(if (book == null)
+                notLoadedCallback
+            else
+                loadedCallback(book)
+            )
         }
 
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.setBook(mValues[position])
+        private val notLoadedCallback: View.OnClickListener = View.OnClickListener {
+            // static no-op function callback, shared for extra bit of performance
+        }
 
-            holder.mView.setOnClickListener { v ->
-                val item = mValues[position] ?: return@setOnClickListener
+        private fun loadedCallback(book: GoogleBooks.Volume) = View.OnClickListener { view ->
+            if (mTwoPane) {
+                val arguments = Bundle()
+                arguments.putString(BookDetailFragment.ARG_ITEM_ID, book.id)
+                val fragment = BookDetailFragment()
+                fragment.arguments = arguments
+                supportFragmentManager.beginTransaction()
+                        .replace(R.id.book_detail_container, fragment)
+                        .commit()
+            } else {
+                val context = view.context
+                val intent = Intent(context, BookDetailActivity::class.java)
+                intent.putExtra(BookDetailFragment.ARG_ITEM_ID, book.id)
 
-                if (mTwoPane) {
-                    val arguments = Bundle()
-                    arguments.putString(BookDetailFragment.ARG_ITEM_ID, item.id)
-                    val fragment = BookDetailFragment()
-                    fragment.arguments = arguments
-                    supportFragmentManager.beginTransaction()
-                            .replace(R.id.book_detail_container, fragment)
-                            .commit()
-                } else {
-                    val context = v.context
-                    val intent = Intent(context, BookDetailActivity::class.java)
-                    intent.putExtra(BookDetailFragment.ARG_ITEM_ID, item.id)
-
-                    context.startActivity(intent)
-                }
+                context.startActivity(intent)
             }
-        }
-
-        override fun onDetachedFromRecyclerView(recyclerView: RecyclerView?) {
-            super.onDetachedFromRecyclerView(recyclerView)
         }
 
         override fun getItemCount() = mValues.size
 
-        inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
+        inner class BookViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
 
             fun setBook(book: GoogleBooks.Volume?) {
 
@@ -153,10 +162,11 @@ class BookListActivity : AppCompatActivity() {
             }
 
             private var ImageView.imageUrlLazy: String?
-                get() = throw UnsupportedOperationException("get ImageView.imageUrlLazy")
+                get() = null
                 set(url) {
                     Glide.clear(this)
-                    glide.load(url).fitCenter().crossFade().into(this)
+                    if (url != null)
+                        glide.load(url).fitCenter().crossFade().into(this)
                 }
 
         }
