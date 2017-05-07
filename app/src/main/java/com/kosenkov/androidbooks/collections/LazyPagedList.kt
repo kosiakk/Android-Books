@@ -1,4 +1,4 @@
-package com.kosenkov.androidbooks
+package com.kosenkov.androidbooks.collections
 
 /**
  * This implementation of List interface loads its data lazily

@@ -1,7 +1,7 @@
 package com.kosenkov.androidbooks.books
 
 import android.net.Uri
-import com.kosenkov.androidbooks.asSequence
+import com.kosenkov.androidbooks.collections.asSequence
 import org.json.JSONObject
 import java.net.URL
 import kotlin.text.Charsets.UTF_8

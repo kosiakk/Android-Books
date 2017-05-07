@@ -1,7 +1,7 @@
 package com.kosenkov.androidbooks.books
 
 import android.support.test.runner.AndroidJUnit4
-import com.kosenkov.androidbooks.asSequence
+import com.kosenkov.androidbooks.collections.asSequence
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals

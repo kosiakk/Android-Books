@@ -1,10 +1,11 @@
-package com.kosenkov.androidbooks
+package com.kosenkov.androidbooks.view
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.kosenkov.androidbooks.R
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.activity_book_detail.view.*
 import kotlinx.android.synthetic.main.book_detail.view.*

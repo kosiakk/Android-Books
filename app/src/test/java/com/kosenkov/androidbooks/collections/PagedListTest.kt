@@ -1,4 +1,4 @@
-package com.kosenkov.androidbooks
+package com.kosenkov.androidbooks.collections
 
 import org.junit.Assert.*
 import org.junit.Test

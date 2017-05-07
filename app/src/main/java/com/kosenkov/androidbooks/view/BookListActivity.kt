@@ -1,4 +1,4 @@
-package com.kosenkov.androidbooks
+package com.kosenkov.androidbooks.view
 
 import android.content.Intent
 import android.os.Bundle
@@ -12,8 +12,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.kosenkov.androidbooks.R
 import com.kosenkov.androidbooks.books.GoogleBooks
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
+import com.kosenkov.androidbooks.collections.LazyPagedList
 import kotlinx.android.synthetic.main.activity_book_list.*
 import kotlinx.android.synthetic.main.book_list.*
 import kotlinx.android.synthetic.main.book_list_content.view.*
