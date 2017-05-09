@@ -35,26 +35,27 @@ class PagedListTest {
 
     @Test
     fun testInitialNull() {
+        val list: List<String?> = Words()
 
-        val list = Words()
         assertEquals("hello", list[0])
         assertEquals("world", list[1])
 
-        assertNull(list[2]) // element was not loaded
+        assertNull(list[2]) // element is not loaded on the first request
         assertEquals("2: page 1 first", list[2])
         assertEquals("3: page 1 second", list[3])
 
-        assertNull(list[4]) // element was not loaded
+        assertNull(list[4]) // element was not loaded on the first request
         assertEquals("4: page 2 first", list[4])
 
-        try {
-            val outside = list[5]
-            fail("IndexOutOfBoundsException should have been thrown")
-        } catch (err: IndexOutOfBoundsException) {
+        assertThrows<IndexOutOfBoundsException> {
+            list[5]
+        }
+
+        assertThrows<IndexOutOfBoundsException> {
+            list[-1]
         }
 
     }
-
 
     /**
      * This test case never gets any data

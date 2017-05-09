@@ -5,7 +5,7 @@ package com.kosenkov.androidbooks.collections
  * by requesting external data in fixed pages.
  *
  * This implementation is better suited for GUIs than returning Future<E>, because
- * read operations are constant-time and eager to fail immediately.
+ * read operations are constant-time and eager to fail immediately, if the data is not available.
  *
  * Implementations should asynchronously call `setPageData` or `resetPageData` from `enqueueFetch
  */
@@ -15,11 +15,12 @@ abstract class LazyPagedList<E>(totalSize: Int, protected val pageSize: Int) : A
         require(pageSize > 0)
     }
 
-    private val Page_NotRequested: List<E>? = null
-    private val Page_RequestSent: List<E>? = emptyList()
+    override val size = totalSize
+
     private val pages = arrayOfNulls<List<E>>(totalSize divideRoundUp pageSize)
 
-    override val size = totalSize
+    private val Page_NotRequested: List<E>? = null          // default value of each element in the array
+    private val Page_RequestSent: List<E>? = emptyList()    // request is being processed or has returned no data
 
     constructor(totalSize: Int, firstPage: List<E>) : this(totalSize, firstPage.size) {
         pages[0] = firstPage
@@ -32,13 +33,13 @@ abstract class LazyPagedList<E>(totalSize: Int, protected val pageSize: Int) : A
      */
     @Synchronized
     override fun get(index: Int): E? {
-        if (index < 0 || index >= size) throw IndexOutOfBoundsException("index: $index, lazy size: $size")
+        if (index < 0 || index >= size) throw IndexOutOfBoundsException("index: $index, total size: $size")
 
         val pageIndex = index / pageSize
-        val indexOnPage = index.rem(pageSize)
+        val indexOnPage = index - pageIndex * pageSize // = index.rem(pageSize), but faster
 
         // Array is prepared for all the pages in advance
-        // This can be changed to Map<Page, List> if needed
+        // This can be changed to Map<PageIndex, List> if needed
         assert(pageIndex in pages.indices)
 
         val page = pages[pageIndex]
@@ -69,13 +70,14 @@ abstract class LazyPagedList<E>(totalSize: Int, protected val pageSize: Int) : A
     @Synchronized
     protected fun setPageData(pageIndex: Int, elements: List<E>) {
 
-// ToDo - this check fails sometimes
-//
-//        require(elements.size == pageSize || size - pageIndex * pageSize == elements.size) {
-//            "List of ${elements.size} elements is added to the page $pageIndex"
-//        }
+        require(elements.size <= pageSize) {
+            // Some pages contain less data, than expected, potentially resulting in gaps
 
-        pages[pageIndex] = elements // It would be better to copy the (possibly mutable) list
+            "List of ${elements.size} elements is added to the page $pageIndex, but the page size is $pageSize"
+        }
+
+        // It would be safer to copy the (possibly mutable) list, but the method is `protected` anyways
+        pages[pageIndex] = elements
     }
 
     /**
