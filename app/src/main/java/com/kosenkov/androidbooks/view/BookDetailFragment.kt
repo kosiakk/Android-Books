@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.kosenkov.androidbooks.R
+import com.kosenkov.androidbooks.books.GoogleBooksCache
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.activity_book_detail.view.*
 import kotlinx.android.synthetic.main.book_detail.view.*
@@ -22,7 +23,7 @@ import org.jetbrains.anko.uiThread
  */
 class BookDetailFragment : Fragment() {
 
-    private val booksApi = GoogleBooksHttp()
+    private val booksApi = GoogleBooksCache(GoogleBooksHttp())
     private lateinit var volumeId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
