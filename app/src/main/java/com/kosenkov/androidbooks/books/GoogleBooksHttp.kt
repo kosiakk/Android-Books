@@ -1,7 +1,6 @@
 package com.kosenkov.androidbooks.books
 
 import android.net.Uri
-import com.kosenkov.androidbooks.collections.asSequence
 import org.json.JSONObject
 import java.net.URL
 import kotlin.text.Charsets.UTF_8
@@ -32,9 +31,7 @@ class GoogleBooksHttp : GoogleBooks {
                 .appendQueryParameter("startIndex", startIndex.toString())
                 .build()
 
-        val json: String = uri.readString() // will throw exception otherwise
-
-        return parseVolumes(JSONObject(json), startIndex, query)
+        return uri.readJson().toVolumes()
     }
 
     override fun details(volumeId: String): GoogleBooks.VolumeDetails {
@@ -45,48 +42,21 @@ class GoogleBooksHttp : GoogleBooks {
                 .appendQueryParameter("projection", "lite")
                 .build()
 
-        val json = uri.readString().toJsonObject()
+        val json = uri.readJson()
 
         return GoogleBooks.VolumeDetails(json.toVolume(), ("main category"))
     }
 
-    // https://developers.google.com/books/docs/v1/reference/volumes
-    private fun JSONObject.toVolumes(startIndex: Int, searchQuery: String) =
-            GoogleBooks.Volumes(
-                    getInt("totalItems"),
-                    optJSONArray("items")?.asSequence<JSONObject>()?.map { it.toVolume() } ?: emptySequence()
-            )
+    private fun Uri.readJson() = JSONObject(readString())
 
-    private fun JSONObject.toVolume(): GoogleBooks.Volume {
-        val info = getJSONObject("volumeInfo")
-        return GoogleBooks.Volume(
-                getString("id"),
-                info.getString("title"),
-                info.optString("subtitle"),
-                info.optJSONArray("authors")?.asSequence<String>()?.joinToString() ?: "",
-                info.optJSONObject("imageLinks")?.getString("thumbnail")
-        )
-    }
-
-    // will throw exception on failures
-    private fun Uri.readString(): String {
-
-        val json: String = URL(toString()).openStream().use {
-            it.bufferedReader(charset = UTF_8).readText()
-        }
-
-        // should we handle network problems?
-        // 1. retry after timeout might be too late for GUI
-        // 2. how to handle 5xx errors? Quota Exceeded errors?
-
-        return json
-    }
-
-    fun parseVolumes(jsonObject: JSONObject, startIndex: Int, searchQuery: String) = jsonObject.toVolumes(startIndex, searchQuery)
-
-    private inline fun String.toJsonObject() = JSONObject(this)
-
-
+    /*
+    The method will throw exception on failures, because retry after timeout might be too late for GUI.
+    How to handle 5xx errors? Quota Exceeded errors?
+     */
+    private fun Uri.readString(): String =
+            URL(toString()).openStream().use {
+                it.bufferedReader(charset = UTF_8).readText()
+            }
 }
 
 

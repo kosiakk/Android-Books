@@ -68,7 +68,7 @@ class GoogleBooksHttpParserTest {
         }
         """
 
-        val data = GoogleBooksHttp().parseVolumes(JSONObject(json), 0, "")
+        val data = JSONObject(json).toVolumes()
         val books = data.items.toList()
 
         assertEquals(3, books.size)
