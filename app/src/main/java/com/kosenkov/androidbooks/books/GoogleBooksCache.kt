@@ -3,13 +3,26 @@ package com.kosenkov.androidbooks.books
 import android.util.LruCache
 import com.kosenkov.androidbooks.collections.getOrPut
 
-// A dummy example to justify a common interface
+/**
+ * A simple caching layer around GoogleBooks API.
+ * It remembers several last search results and doesn't call
+ * HTTP backend if the answer is ready.
+ *
+ * A trivial example a useful common interface.
+ */
 class GoogleBooksCache(private val delegate: GoogleBooks) : GoogleBooks {
 
+    // GoogleBooks Interface methods are documented as blocking, so everything is possible here!
+    // disk cache, db lookup, Memcached, etc...
+    private val cache1 = LruCache<String, GoogleBooks.Volumes>(10)
+    private val cache2 = LruCache<String, GoogleBooks.VolumeDetails>(10)
+
+    /**
+     * Caches the first page of results to minimize GUI latency
+     */
     override fun search(query: String, startIndex: Int) =
             if (startIndex == 0) {
-                // try to cache the first page of results to minimize GUI latency
-                cached("first page of $query") {
+                cache1.getOrPut(query) {
                     delegate.search(query, startIndex)
                 }
             } else {
@@ -17,21 +30,13 @@ class GoogleBooksCache(private val delegate: GoogleBooks) : GoogleBooks {
                 delegate.search(query, startIndex)
             }
 
-    override fun details(volumeId: String) = cached("details of $volumeId") {
-        // individual book details will be cached for faster re-visit and lower burden on API
-        delegate.details(volumeId)
-    }
+    /**
+     * Individual book details will be cached for faster re-visit and lower burden on API
+     */
+    override fun details(volumeId: String) =
+            cache2.getOrPut(volumeId) {
+                delegate.details(volumeId)
+            }
 
-
-    // Interface methods are documented as blocking, so everything is possible here!
-    // disk cache, db lookup, memcached, etc...
-    private val storage = LruCache<String, Any>(10)
-
-    private inline fun <reified V> cached(key: String, generator: () -> V): V {
-        @Suppress("UNCHECKED_CAST")
-        val unchecked = storage as LruCache<String, V>
-
-        return unchecked.getOrPut(key, generator)
-    }
-
+    override val pageSize = delegate.pageSize
 }

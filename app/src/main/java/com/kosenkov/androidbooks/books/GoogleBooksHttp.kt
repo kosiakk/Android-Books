@@ -13,7 +13,10 @@ class GoogleBooksHttp : GoogleBooks {
             .appendEncodedPath("books/v1/volumes")
             .appendQueryParameter("key", "AIzaSyAyiYb_NGVu6MIim1TmQDRG0VRrnO0C550")
 
-    val PageSize = 40
+    /**
+     * Fixed number of volumes fetched per HTTP-request at once
+     */
+    override val pageSize = 42
 
     /**
      * Performs blocking HTTP request to Google API and parses resulting JSON
@@ -25,7 +28,7 @@ class GoogleBooksHttp : GoogleBooks {
         // doc: https://developers.google.com/books/docs/v1/reference/volumes/list
         val uri = httpAPI()
                 .appendQueryParameter("q", query)
-                .appendQueryParameter("maxResults", PageSize.toString())
+                .appendQueryParameter("maxResults", pageSize.toString())
                 .appendQueryParameter("orderBy", "relevance")
                 .appendQueryParameter("fields", "totalItems,items(id,kind,volumeInfo(title,subtitle,authors,imageLinks(thumbnail)))")
                 .appendQueryParameter("startIndex", startIndex.toString())

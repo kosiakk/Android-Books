@@ -37,4 +37,9 @@ interface GoogleBooks {
      * Retrieve all the details about a specific volume
      */
     fun details(volumeId: String): VolumeDetails
+
+    /**
+     * Expected length of Volumes.items
+     */
+    val pageSize: Int
 }
