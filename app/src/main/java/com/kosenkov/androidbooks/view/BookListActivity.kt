@@ -5,17 +5,16 @@ import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
+import com.kosenkov.androidbooks.LazyBooksList
 import com.kosenkov.androidbooks.R
 import com.kosenkov.androidbooks.books.GoogleBooks
+import com.kosenkov.androidbooks.books.GoogleBooksCache
 import com.kosenkov.androidbooks.books.GoogleBooksHttp
-import com.kosenkov.androidbooks.collections.LazyPagedList
 import kotlinx.android.synthetic.main.activity_book_list.*
 import kotlinx.android.synthetic.main.book_list.*
 import kotlinx.android.synthetic.main.book_list_content.view.*
@@ -42,10 +41,9 @@ class BookListActivity : AppCompatActivity() {
      */
     private var mTwoPane: Boolean = false // unfortunately late init is not available for primitive types
 
-    private lateinit var glide: RequestManager
     private lateinit var searchListAdapter: SimpleItemRecyclerViewAdapter
 
-    private val booksApi = GoogleBooksHttp()
+    private val booksApi = GoogleBooksCache(GoogleBooksHttp())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +65,6 @@ class BookListActivity : AppCompatActivity() {
             mTwoPane = true
         }
 
-        glide = Glide.with(this)
         searchListAdapter = SimpleItemRecyclerViewAdapter()
 
         book_list.adapter = searchListAdapter
@@ -78,45 +75,45 @@ class BookListActivity : AppCompatActivity() {
     private fun doSearch(query: String) {
 
         doAsync {
-            val firstPage = booksApi.search(query)  // blocking operation
+            // blocking operation
+            val lazyBooksList = LazyBooksList(query, booksApi, searchListAdapter)
 
             uiThread {
-                searchListAdapter.mValues = LazyBooksList(query, firstPage)
-                searchListAdapter.notifyDataSetChanged()
+                searchListAdapter.setList(lazyBooksList)
             }
-
         }
 
     }
 
-    inner class LazyBooksList(val searchQuery: String, firstPage: GoogleBooks.Volumes)
-        : LazyPagedList<GoogleBooks.Volume>(firstPage.totalItems, firstPage.items.toList()) {
+    private fun onBookSelected(book: GoogleBooks.Volume) {
+        if (mTwoPane) {
+            val arguments = Bundle()
+            arguments.putString(BookDetailFragment.ARG_ITEM_ID, book.id)
+            val fragment = BookDetailFragment()
+            fragment.arguments = arguments
+            supportFragmentManager.beginTransaction()
+                    .replace(R.id.book_detail_container, fragment)
+                    .commit()
+        } else {
+            val context = applicationContext
+            val intent = Intent(context, BookDetailActivity::class.java)
+            intent.putExtra(BookDetailFragment.ARG_ITEM_ID, book.id)
 
-        override fun enqueueFetch(pageIndex: Int) {
-            Log.v("LazyList", "enqueueFetch(pageIndex=$pageIndex)")
-            doAsync {
-                val startIndex = pageIndex * pageSize
-
-                // blocking call
-                val result = booksApi.search(searchQuery, startIndex)
-
-                setPageData(pageIndex, result.items.toList())
-
-                uiThread {
-                    // Only the original thread that created a view hierarchy can touch its views.
-                    searchListAdapter.notifyItemRangeChanged(startIndex, pageSize)
-                }
-            }
+            context.startActivity(intent)
         }
     }
 
+    /**
+     * This class is fairly simple - it transfers the data from the List<Volume?> to a recycled list row view
+     */
     inner class SimpleItemRecyclerViewAdapter : RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.BookViewHolder>() {
-        var mValues: List<GoogleBooks.Volume?> = emptyList()
+        private var mValues: List<GoogleBooks.Volume?> = emptyList()
+        private val glide = Glide.with(applicationContext)!!
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-                BookViewHolder(
-                        LayoutInflater.from(parent.context)
-                                .inflate(R.layout.book_list_content, parent, /* attachToRoot = */false))
+        fun setList(lazyBooksList: List<GoogleBooks.Volume?>) {
+            mValues = lazyBooksList
+            notifyDataSetChanged()
+        }
 
         override fun onBindViewHolder(holder: BookViewHolder, position: Int) {
             val book = mValues[position]
@@ -125,7 +122,9 @@ class BookListActivity : AppCompatActivity() {
             holder.mView.setOnClickListener(if (book == null)
                 notLoadedCallback
             else
-                loadedCallback(book)
+                View.OnClickListener {
+                    onBookSelected(book)
+                }
             )
         }
 
@@ -133,45 +132,32 @@ class BookListActivity : AppCompatActivity() {
             // static no-op function callback, shared for extra bit of performance
         }
 
-        private fun loadedCallback(book: GoogleBooks.Volume) = View.OnClickListener { view ->
-            if (mTwoPane) {
-                val arguments = Bundle()
-                arguments.putString(BookDetailFragment.ARG_ITEM_ID, book.id)
-                val fragment = BookDetailFragment()
-                fragment.arguments = arguments
-                supportFragmentManager.beginTransaction()
-                        .replace(R.id.book_detail_container, fragment)
-                        .commit()
-            } else {
-                val context = view.context
-                val intent = Intent(context, BookDetailActivity::class.java)
-                intent.putExtra(BookDetailFragment.ARG_ITEM_ID, book.id)
-
-                context.startActivity(intent)
-            }
-        }
-
         override fun getItemCount() = mValues.size
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+                BookViewHolder(
+                        LayoutInflater.from(parent.context)
+                                .inflate(R.layout.book_list_content, parent, /* attachToRoot = */false))
 
         inner class BookViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
 
+            /**
+             * Shows available book data
+             */
             fun setBook(book: GoogleBooks.Volume?) {
-
                 mView.book_title.text = book?.title ?: "..."
                 mView.book_subtitle.text = book?.subtitle ?: ""
-
-                mView.book_thumbnail.imageUrlLazy = book?.thumbnailImageLinks
+                mView.book_thumbnail.loadImage(book?.thumbnailImageLinks)
             }
 
-            private var ImageView.imageUrlLazy: String?
-                get() = null
-                set(url) {
-                    Glide.clear(this)
-                    if (url != null)
-                        glide.load(url).fitCenter().crossFade().into(this)
-                }
+            private fun ImageView.loadImage(url: String?) {
+                Glide.clear(this)
+
+                if (url != null)
+                    glide.load(url).fitCenter().crossFade().into(this)
+            }
 
         }
-    }
 
+    }
 }

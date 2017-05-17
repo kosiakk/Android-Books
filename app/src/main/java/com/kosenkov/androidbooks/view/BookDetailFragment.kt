@@ -36,21 +36,30 @@ class BookDetailFragment : Fragment() {
         volumeId = arguments.getString(ARG_ITEM_ID)!!
     }
 
-
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-        val rootView = inflater!!.inflate(R.layout.book_detail, container, false)
-
+    override fun onViewCreated(rootView: View?, savedInstanceState: Bundle?) {
         doAsync {
             val mItem = booksApi.details(volumeId)
 
             uiThread {
-                rootView.detail_toolbar?.title = mItem.volume.title
+                activity.title = mItem.volume.title
+
+                val theToolbar = rootView!!.detail_toolbar
+                if (theToolbar != null) {
+                    theToolbar.title = mItem.volume.title
+                } else {
+//                    rootView
+                }
                 rootView.book_detail.text = mItem.volume.subtitle
 
                 // toDo other details
             }
         }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
+
+        val rootView = inflater!!.inflate(R.layout.book_detail, container, false)
 
         return rootView
     }
