@@ -12,7 +12,7 @@ class PagedListTest {
     /**
      * Test data becomes available immediately on request
      */
-    class Words : LazyPagedList<String>(5, listOf("hello", "world")) {
+    class Words : LazyPagedList<String>(listOf("hello", "world")) {
 
         override fun enqueueFetch(pageIndex: Int) {
             print(" (Fetching page $pageIndex...) ")
@@ -48,10 +48,6 @@ class PagedListTest {
         assertEquals("4: page 2 first", list[4])
 
         assertThrows<IndexOutOfBoundsException> {
-            list[5]
-        }
-
-        assertThrows<IndexOutOfBoundsException> {
             list[-1]
         }
 
@@ -60,7 +56,7 @@ class PagedListTest {
     /**
      * This test case never gets any data
      */
-    class NoData : LazyPagedList<String>(100, 20) {
+    class NoData : LazyPagedList<String>(20) {
         val requestCounts = IntArray(5) { 0 }
 
         override fun enqueueFetch(pageIndex: Int) {
