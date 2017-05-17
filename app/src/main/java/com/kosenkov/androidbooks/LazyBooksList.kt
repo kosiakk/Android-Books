@@ -3,9 +3,16 @@ package com.kosenkov.androidbooks
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import com.kosenkov.androidbooks.books.GoogleBooks
+import com.kosenkov.androidbooks.books.GoogleBooksCache
+import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import com.kosenkov.androidbooks.collections.LazyPagedList
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
+
+/**
+ * Global singleton in order to share the cache
+ */
+val booksApi = GoogleBooksCache(GoogleBooksHttp())
 
 /**
  * Loads Google Books search results in the background thread.
@@ -14,7 +21,6 @@ import org.jetbrains.anko.uiThread
  * Other pages are loaded in the background in demand.
  */
 class LazyBooksList(val searchQuery: String,
-                    val booksApi: GoogleBooks,
                     val callback: RecyclerView.Adapter<*>)
     : LazyPagedList<GoogleBooks.Volume>(booksApi.pageSize) {
 

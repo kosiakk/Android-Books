@@ -1,6 +1,7 @@
 package com.kosenkov.androidbooks.books
 
 import android.net.Uri
+import android.util.Log
 import org.json.JSONObject
 import java.net.URL
 import kotlin.text.Charsets.UTF_8
@@ -16,13 +17,15 @@ class GoogleBooksHttp : GoogleBooks {
     /**
      * Fixed number of volumes fetched per HTTP-request at once
      */
-    override val pageSize = 42
+    override val pageSize = 32
 
     /**
      * Performs blocking HTTP request to Google API and parses resulting JSON
      */
     @Throws(Exception::class)
     override fun search(query: String, startIndex: Int): GoogleBooks.Volumes {
+        Log.v("GoogleBooksHttp", "$query (start from $startIndex)")
+
         require(startIndex >= 0)
 
         // doc: https://developers.google.com/books/docs/v1/reference/volumes/list
@@ -38,6 +41,7 @@ class GoogleBooksHttp : GoogleBooks {
     }
 
     override fun details(volumeId: String): GoogleBooks.VolumeDetails {
+        Log.v("GoogleBooksHttp", volumeId)
 
         // doc: https://developers.google.com/books/docs/v1/reference/volumes/get
         val uri = httpAPI()

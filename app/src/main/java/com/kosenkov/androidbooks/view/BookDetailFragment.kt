@@ -6,8 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.kosenkov.androidbooks.R
-import com.kosenkov.androidbooks.books.GoogleBooksCache
-import com.kosenkov.androidbooks.books.GoogleBooksHttp
+import com.kosenkov.androidbooks.books.GoogleBooks
+import com.kosenkov.androidbooks.booksApi
 import kotlinx.android.synthetic.main.activity_book_detail.view.*
 import kotlinx.android.synthetic.main.book_detail.view.*
 import org.jetbrains.anko.doAsync
@@ -23,8 +23,8 @@ import org.jetbrains.anko.uiThread
  */
 class BookDetailFragment : Fragment() {
 
-    private val booksApi = GoogleBooksCache(GoogleBooksHttp())
     private lateinit var volumeId: String
+    private var volumeData: GoogleBooks.Volume? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,26 +34,37 @@ class BookDetailFragment : Fragment() {
         }
 
         volumeId = arguments.getString(ARG_ITEM_ID)!!
+        volumeData = arguments.getSerializable(ARG_ITEM_DETAILS) as GoogleBooks.Volume?
     }
 
     override fun onViewCreated(rootView: View?, savedInstanceState: Bundle?) {
+        val cachedPreview = volumeData
+        if (cachedPreview != null) {
+            // This activity
+            applyVolume(cachedPreview, rootView)
+        }
+
         doAsync {
             val mItem = booksApi.details(volumeId)
-
+            val volume = mItem.volume
             uiThread {
-                activity.title = mItem.volume.title
-
-                val theToolbar = rootView!!.detail_toolbar
-                if (theToolbar != null) {
-                    theToolbar.title = mItem.volume.title
-                } else {
-//                    rootView
-                }
-                rootView.book_detail.text = mItem.volume.subtitle
-
-                // toDo other details
+                applyVolume(volume, rootView)
             }
         }
+    }
+
+    private fun applyVolume(volume: GoogleBooks.Volume, rootView: View?) {
+        activity.title = volume.title
+
+        val theToolbar = rootView!!.detail_toolbar
+        if (theToolbar != null) {
+            theToolbar.title = volume.title
+        } else {
+            //                    rootView
+        }
+        rootView.book_detail.text = volume.subtitle
+
+        // toDo other details
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
@@ -70,5 +81,6 @@ class BookDetailFragment : Fragment() {
          * represents.
          */
         val ARG_ITEM_ID = "volume_id"
+        val ARG_ITEM_DETAILS = "volume"
     }
 }

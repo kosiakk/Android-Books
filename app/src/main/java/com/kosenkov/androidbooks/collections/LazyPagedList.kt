@@ -83,7 +83,7 @@ abstract class LazyPagedList<E>(protected val pageSize: Int) : AbstractList<E?>(
         }
 
         // It would be safer to copy the (possibly mutable) list, but the method is `protected` anyways
-        pages[pageIndex] = elements
+        pages.setSafe(pageIndex, elements)
     }
 
     /**

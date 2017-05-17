@@ -1,5 +1,7 @@
 package com.kosenkov.androidbooks.books
 
+import java.io.Serializable
+
 /**
  * A low-level mirror of Google Books API
  * All calls are blocking
@@ -16,7 +18,7 @@ interface GoogleBooks {
                       val title: String,
                       val subtitle: String?,
                       val authors: String,
-                      val thumbnailImageLinks: String?)
+                      val thumbnailImageLinks: String?) : Serializable
 
     /**
      * Detailed information, which enriches the Volume data
@@ -25,7 +27,7 @@ interface GoogleBooks {
                              val mainCategory: String
             // Many other fields might be added here on demand.
             // Alternatively, this class might be converted to purely dynamic data source like a Map
-    )
+    ) : Serializable
 
     /**
      * Performs blocking low-level operation and returns one page of search results.

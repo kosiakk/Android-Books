@@ -13,8 +13,6 @@ import com.bumptech.glide.Glide
 import com.kosenkov.androidbooks.LazyBooksList
 import com.kosenkov.androidbooks.R
 import com.kosenkov.androidbooks.books.GoogleBooks
-import com.kosenkov.androidbooks.books.GoogleBooksCache
-import com.kosenkov.androidbooks.books.GoogleBooksHttp
 import kotlinx.android.synthetic.main.activity_book_list.*
 import kotlinx.android.synthetic.main.book_list.*
 import kotlinx.android.synthetic.main.book_list_content.view.*
@@ -43,7 +41,6 @@ class BookListActivity : AppCompatActivity() {
 
     private lateinit var searchListAdapter: SimpleItemRecyclerViewAdapter
 
-    private val booksApi = GoogleBooksCache(GoogleBooksHttp())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,7 +73,7 @@ class BookListActivity : AppCompatActivity() {
 
         doAsync {
             // blocking operation
-            val lazyBooksList = LazyBooksList(query, booksApi, searchListAdapter)
+            val lazyBooksList = LazyBooksList(query, searchListAdapter)
 
             uiThread {
                 searchListAdapter.setList(lazyBooksList)
@@ -89,6 +86,8 @@ class BookListActivity : AppCompatActivity() {
         if (mTwoPane) {
             val arguments = Bundle()
             arguments.putString(BookDetailFragment.ARG_ITEM_ID, book.id)
+            arguments.putSerializable(BookDetailFragment.ARG_ITEM_DETAILS, book)
+
             val fragment = BookDetailFragment()
             fragment.arguments = arguments
             supportFragmentManager.beginTransaction()
@@ -98,6 +97,7 @@ class BookListActivity : AppCompatActivity() {
             val context = applicationContext
             val intent = Intent(context, BookDetailActivity::class.java)
             intent.putExtra(BookDetailFragment.ARG_ITEM_ID, book.id)
+            intent.putExtra(BookDetailFragment.ARG_ITEM_DETAILS, book)
 
             context.startActivity(intent)
         }
