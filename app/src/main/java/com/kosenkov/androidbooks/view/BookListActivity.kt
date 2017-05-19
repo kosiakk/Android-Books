@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.SearchView
 import com.bumptech.glide.Glide
 import com.kosenkov.androidbooks.LazyBooksList
 import com.kosenkov.androidbooks.R
@@ -18,6 +19,8 @@ import kotlinx.android.synthetic.main.book_list.*
 import kotlinx.android.synthetic.main.book_list_content.view.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
+import java.util.*
+
 
 /**
  * An activity represents a list of Books.
@@ -31,7 +34,7 @@ import org.jetbrains.anko.uiThread
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-class BookListActivity : AppCompatActivity() {
+class BookListActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -54,6 +57,9 @@ class BookListActivity : AppCompatActivity() {
                     .setAction("Action", null).show()
         }
 
+        search_bar.setIconifiedByDefault(false)
+        search_bar.setOnQueryTextListener(this)
+
         if (findViewById(R.id.book_detail_container) != null) {
             // The detail container view will be present only in the
             // large-screen layouts (res/values-w900dp).
@@ -66,20 +72,32 @@ class BookListActivity : AppCompatActivity() {
 
         book_list.adapter = searchListAdapter
 
-        doSearch("Liza")
+        if (search_bar.query.isBlank()) {
+            // This might be specialized by language in XML
+            val defaultSearchSuggestions = resources.getStringArray(R.array.defaultSearchSuggestions)
+
+            val any = defaultSearchSuggestions[Random().nextInt(defaultSearchSuggestions.size)]
+            search_bar.setQuery(any, true)
+        }
     }
 
-    private fun doSearch(query: String) {
+    override fun onQueryTextSubmit(query: String?): Boolean {
 
         doAsync {
             // blocking operation
-            val lazyBooksList = LazyBooksList(query, searchListAdapter)
+            val lazyBooksList = LazyBooksList(query!!, searchListAdapter)
 
             uiThread {
                 searchListAdapter.setList(lazyBooksList)
             }
         }
 
+        return true // the search request was processed
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        // possibility to handle suggestions, like filter existing list
+        return false
     }
 
     private fun onBookSelected(book: GoogleBooks.Volume) {

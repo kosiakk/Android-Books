@@ -1,5 +1,6 @@
 package com.kosenkov.androidbooks.books
 
+import org.json.JSONObject
 import java.io.Serializable
 
 /**
@@ -9,7 +10,7 @@ import java.io.Serializable
 interface GoogleBooks {
 
     // Actually, this is a generic container for paged search results, as seen in other Google APIs
-    data class Volumes(val totalItems: Int, val items: Sequence<Volume>)
+    data class Volumes(val totalItems: Int, val items: List<Volume>)
 
     /**
      * Minimal subset of search results for each Volume
@@ -24,7 +25,7 @@ interface GoogleBooks {
      * Detailed information, which enriches the Volume data
      */
     data class VolumeDetails(val volume: Volume,
-                             val mainCategory: String
+                             val details:JSONObject
             // Many other fields might be added here on demand.
             // Alternatively, this class might be converted to purely dynamic data source like a Map
     ) : Serializable

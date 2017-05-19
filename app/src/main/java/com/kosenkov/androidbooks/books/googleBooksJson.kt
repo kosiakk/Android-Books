@@ -11,7 +11,7 @@ import org.json.JSONObject
 fun JSONObject.toVolumes() =
         GoogleBooks.Volumes(
                 getInt("totalItems"),
-                optJSONArray("items")?.asSequence<JSONObject>()?.map { it.toVolume() } ?: emptySequence()
+                optJSONArray("items")?.asSequence<JSONObject>()?.map { it.toVolume() }?.toList() ?: emptyList()
         )
 
 fun JSONObject.toVolume(): GoogleBooks.Volume {

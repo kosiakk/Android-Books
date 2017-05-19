@@ -46,8 +46,9 @@ class BookDetailActivity : AppCompatActivity() {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
             val arguments = Bundle()
-            arguments.putString(BookDetailFragment.ARG_ITEM_ID,
-                    intent.getStringExtra(BookDetailFragment.ARG_ITEM_ID))
+            arguments.putString(BookDetailFragment.ARG_ITEM_ID, intent.getStringExtra(BookDetailFragment.ARG_ITEM_ID))
+            arguments.putSerializable(BookDetailFragment.ARG_ITEM_DETAILS, intent.getSerializableExtra(BookDetailFragment.ARG_ITEM_DETAILS))
+
             val fragment = BookDetailFragment()
             fragment.arguments = arguments
             supportFragmentManager.beginTransaction()

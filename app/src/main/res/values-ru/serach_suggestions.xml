@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="defaultSearchSuggestions" >
+        <!-- Some popular books, taken from Wikipedia -->
+        <item>Гарри Поттер</item>
+        <item>Код ДаВинчи</item>
+        <item>Мосты округа Мэдиссон</item>
+        <item>Лолита</item>
+    </string-array>
+
+</resources>

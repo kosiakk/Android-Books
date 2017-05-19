@@ -5,11 +5,11 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.bumptech.glide.Glide
 import com.kosenkov.androidbooks.R
 import com.kosenkov.androidbooks.books.GoogleBooks
 import com.kosenkov.androidbooks.booksApi
 import kotlinx.android.synthetic.main.activity_book_detail.view.*
-import kotlinx.android.synthetic.main.book_detail.view.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 
@@ -37,18 +37,21 @@ class BookDetailFragment : Fragment() {
         volumeData = arguments.getSerializable(ARG_ITEM_DETAILS) as GoogleBooks.Volume?
     }
 
-    override fun onViewCreated(rootView: View?, savedInstanceState: Bundle?) {
+    override fun onResume() {
+        super.onResume()
+
         val cachedPreview = volumeData
         if (cachedPreview != null) {
             // This activity
-            applyVolume(cachedPreview, rootView)
+            applyVolume(cachedPreview, view)
         }
 
         doAsync {
-            val mItem = booksApi.details(volumeId)
-            val volume = mItem.volume
+            val data = booksApi.details(volumeId)
+            val basicDetails = data.volume
             uiThread {
-                applyVolume(volume, rootView)
+                // update
+                applyVolume(basicDetails, view)
             }
         }
     }
@@ -57,21 +60,21 @@ class BookDetailFragment : Fragment() {
         activity.title = volume.title
 
         val theToolbar = rootView!!.detail_toolbar
-        if (theToolbar != null) {
-            theToolbar.title = volume.title
-        } else {
-            //                    rootView
-        }
-        rootView.book_detail.text = volume.subtitle
+        theToolbar?.title = volume.title
 
-        // toDo other details
+        val thumbnail = volume.thumbnailImageLinks
+
+        if (thumbnail != null && rootView.book_thumbnail != null) {
+            val glide = Glide.with(context)
+            glide.load(thumbnail).fitCenter().crossFade().into(rootView.book_thumbnail)
+        }
+
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-
-        val rootView = inflater!!.inflate(R.layout.book_detail, container, false)
-
+        // todo nonce
+        val rootView = inflater!!.inflate(R.layout.abc_screen_simple, container, false)
         return rootView
     }
 

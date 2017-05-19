@@ -51,7 +51,7 @@ class GoogleBooksHttp : GoogleBooks {
 
         val json = uri.readJson()
 
-        return GoogleBooks.VolumeDetails(json.toVolume(), ("main category"))
+        return GoogleBooks.VolumeDetails(json.toVolume(), json)
     }
 
     private fun Uri.readJson() = JSONObject(readString())

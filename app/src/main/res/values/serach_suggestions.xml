@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <string-array name="defaultSearchSuggestions" tools:ignore="InconsistentArrays">
+
+        <!-- Some popular books, taken from Wikipedia -->
+        <item>Harry Potter</item>
+        <item>The Da Vinci Code</item>
+        <item>The Bridges of Madison County</item>
+        <item>The Name of the Rose</item>
+        <item>Lolita</item>
+        <item>One Hundred Years of Solitude</item>
+        <item>The Lion, the Witch and the Wardrobe</item>
+        <item>The Mark of Zorro</item>
+        <item>20,000 Leagues under the Sea</item>
+    </string-array>
+
+</resources>

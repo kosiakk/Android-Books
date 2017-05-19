@@ -29,7 +29,7 @@ class LazyBooksList(val searchQuery: String,
     init {
         val firstPage = booksApi.search(searchQuery)
         totalItems = firstPage.totalItems
-        setPageData(0, firstPage.items.toList())
+        setPageData(0, firstPage.items)
     }
 
     override val size: Int
@@ -43,10 +43,11 @@ class LazyBooksList(val searchQuery: String,
             // blocking call
             val result = booksApi.search(searchQuery, startIndex)
 
-            setPageData(pageIndex, result.items.toList())
+            // provide downloaded data back to the list
+            setPageData(pageIndex, result.items)
 
             uiThread {
-                // Only the original thread that created a view hierarchy can touch its views.
+                // Schedule items redraw using the new data
                 callback.notifyItemRangeChanged(startIndex, pageSize)
             }
         }
